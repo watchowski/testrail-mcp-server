@@ -16,6 +16,7 @@ This enhanced MCP server provides comprehensive TestRails integration with the f
 - **get_test_cases**: Get test cases with advanced filtering (project, suite, section, type, priority, date range)
 - **get_test_case**: Get specific test case details
 - **create_test_case**: Create new test cases with full field support
+- **create_multiple_test_cases**: Create multiple test cases at once with bulk processing ⭐ **NEW**
 - **update_test_case**: Update existing test cases
 
 #### Test Suite & Section Management
@@ -50,10 +51,12 @@ This enhanced MCP server provides comprehensive TestRails integration with the f
 - **get_priorities**: Get available priorities
 
 ### Advanced Features
+- **Bulk Test Case Creation**: Create multiple test cases at once with `create_multiple_test_cases` tool ⭐ **NEW**
 - **Batch Operations**: Add multiple test results simultaneously
 - **Advanced Filtering**: Date ranges, status, user assignment, completion filters
 - **Hierarchy Support**: Nested sections and milestone hierarchies
 - **Comprehensive Error Handling**: Detailed error messages and graceful failures
+- **Partial Success Support**: Bulk operations continue even if individual items fail
 
 ### Resources
 - **testrails://projects**: Live access to all TestRails projects
@@ -151,6 +154,48 @@ This server covers the most common TestRails API operations:
 - Test runs creation and management
 - Test results management
 - Status information
+
+## Usage Examples
+
+### Bulk Test Case Creation
+
+The `create_multiple_test_cases` tool allows you to create multiple test cases efficiently in a single operation:
+
+```json
+{
+  "tool": "create_multiple_test_cases",
+  "arguments": {
+    "sectionId": 123,
+    "testCases": [
+      {
+        "title": "Login with valid credentials",
+        "description": "Test Steps:\n1. Navigate to login page\n2. Enter valid username\n3. Enter valid password\n4. Click login\n\nExpected: User is logged in successfully",
+        "priority": 3,
+        "refs": "TKT-001"
+      },
+      {
+        "title": "Login with invalid credentials",
+        "description": "Test Steps:\n1. Navigate to login page\n2. Enter invalid username\n3. Enter invalid password\n4. Click login\n\nExpected: Error message is displayed",
+        "priority": 3,
+        "refs": "TKT-001"
+      }
+    ]
+  }
+}
+```
+
+### Workflow for Replicating Scripts
+
+You can replicate complex test case creation scripts using the MCP tools:
+
+1. **Find Project**: Use `get_projects` to find your target project
+2. **Get Structure**: Use `get_test_suites` and `get_sections` to understand the structure
+3. **Create Section**: Use `create_section` if you need a new section
+4. **Bulk Create**: Use `create_multiple_test_cases` to create all test cases at once
+
+This approach is more efficient than individual API calls and provides better error handling.
+
+For detailed examples, see the `/examples` directory in this repository.
 
 ## Security Notes
 

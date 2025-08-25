@@ -109,6 +109,54 @@ class TestRailsClient {
     return response.data;
   }
 
+  async createMultipleTestCases(sectionId: number, testCases: any[]) {
+    const results = [];
+    const errors = [];
+    
+    for (let i = 0; i < testCases.length; i++) {
+      const testCase = testCases[i];
+      try {
+        console.error(`Creating test case ${i + 1}/${testCases.length}: ${testCase.title}`);
+        const response = await this.client.post(`/add_case/${sectionId}`, {
+          title: testCase.title,
+          template_id: testCase.template_id || 1, // Test Case (Text)
+          type_id: testCase.type_id || 1, // Acceptance
+          priority_id: testCase.priority_id || testCase.priority || 3,
+          custom_preconds: testCase.custom_preconds || testCase.preconditions,
+          custom_steps: testCase.custom_steps || testCase.description,
+          custom_steps_separated: testCase.custom_steps_separated || testCase.description,
+          refs: testCase.refs
+        });
+        
+        results.push({
+          success: true,
+          testCase: response.data,
+          index: i
+        });
+        
+        console.error(`✅ Created test case: ${response.data.title} (ID: ${response.data.id})`);
+      } catch (error: any) {
+        console.error(`❌ Failed to create test case: ${testCase.title}`);
+        console.error('Error:', error.response?.data || error.message);
+        
+        errors.push({
+          success: false,
+          error: error.response?.data || error.message,
+          testCase: testCase,
+          index: i
+        });
+      }
+    }
+    
+    return {
+      results,
+      errors,
+      totalAttempted: testCases.length,
+      totalSuccessful: results.length,
+      totalFailed: errors.length
+    };
+  }
+
   async updateTestCase(caseId: number, updates: any) {
     const response = await this.client.post(`/update_case/${caseId}`, updates);
     return response.data;
@@ -670,10 +718,11 @@ server.registerTool(
       sectionId: z.number().describe("The ID of the section where the test case will be created"),
       title: z.string().describe("Title of the test case"),
       description: z.string().optional().describe("Description/steps of the test case"),
-      priority: z.number().optional().describe("Priority ID (1=Low, 2=Medium, 3=High, 4=Critical)")
+      priority: z.number().optional().describe("Priority ID (1=Low, 2=Medium, 3=High, 4=Critical)"),
+      refs: z.string().optional().describe("Reference field for the test case (e.g., ticket ID)")
     }
   },
-  async ({ sectionId, title, description, priority }) => {
+  async ({ sectionId, title, description, priority, refs }) => {
     try {
       const data: any = {
         title,
@@ -685,6 +734,10 @@ server.registerTool(
       
       if (priority) {
         data.priority_id = priority;
+      }
+      
+      if (refs) {
+        data.refs = refs;
       }
 
       const testCase = await testRailsClient.createTestCase(sectionId, data);
@@ -699,6 +752,63 @@ server.registerTool(
         content: [{
           type: "text",
           text: `Error creating test case: ${error.message}`
+        }],
+        isError: true
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "create_multiple_test_cases",
+  {
+    title: "Create Multiple Test Cases",
+    description: "Create multiple test cases at once in a specific section",
+    inputSchema: {
+      sectionId: z.number().describe("The ID of the section where the test cases will be created"),
+      testCases: z.array(z.object({
+        title: z.string().describe("Title of the test case"),
+        description: z.string().optional().describe("Description/steps of the test case"),
+        priority: z.number().optional().describe("Priority ID (1=Low, 2=Medium, 3=High, 4=Critical)"),
+        refs: z.string().optional().describe("Reference field for the test case (e.g., ticket ID)"),
+        preconditions: z.string().optional().describe("Preconditions for the test case"),
+        template_id: z.number().optional().describe("Template ID (default: 1 for Test Case Text)"),
+        type_id: z.number().optional().describe("Test case type ID (default: 1 for Acceptance)")
+      })).describe("Array of test cases to create")
+    }
+  },
+  async ({ sectionId, testCases }) => {
+    try {
+      console.error(`Creating ${testCases.length} test cases in section ${sectionId}...`);
+      const result = await testRailsClient.createMultipleTestCases(sectionId, testCases);
+      
+      const summary = {
+        totalAttempted: result.totalAttempted,
+        totalSuccessful: result.totalSuccessful,
+        totalFailed: result.totalFailed,
+        successfulCases: result.results.map(r => ({
+          id: r.testCase.id,
+          title: r.testCase.title,
+          index: r.index
+        })),
+        failedCases: result.errors.map(e => ({
+          title: e.testCase.title,
+          error: e.error,
+          index: e.index
+        }))
+      };
+      
+      return {
+        content: [{
+          type: "text",
+          text: `Bulk test case creation completed:\n${JSON.stringify(summary, null, 2)}`
+        }]
+      };
+    } catch (error: any) {
+      return {
+        content: [{
+          type: "text",
+          text: `Error creating multiple test cases: ${error.message}`
         }],
         isError: true
       };
