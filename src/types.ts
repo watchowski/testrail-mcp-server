@@ -222,6 +222,7 @@ export interface TestCaseFilters {
   priority_id?: number;
   created_after?: string;
   created_before?: string;
+  refs_filter?: string;
 }
 
 export interface TestRunFilters {

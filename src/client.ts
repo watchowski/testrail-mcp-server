@@ -68,6 +68,7 @@ export class TestRailsClient {
     if (filters?.priority_id) params.priority_id = filters.priority_id;
     if (filters?.created_after) params.created_after = filters.created_after;
     if (filters?.created_before) params.created_before = filters.created_before;
+    if (filters?.refs_filter) params.refs_filter = filters.refs_filter;
     const response = await this.client.get<TestCase[]>(`/get_cases/${projectId}`, { params });
     return response.data;
   }

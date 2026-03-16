@@ -141,6 +141,31 @@ export function registerCaseTools(server: McpServer, client: TestRailsClient): v
   );
 
   server.registerTool(
+    "find_test_cases_by_ref",
+    {
+      title: "Find Test Cases by Reference",
+      description: "Search for test cases that match one or more reference values (e.g., ticket IDs like 'TFX-18' or 'TFX-18,TFX-42')",
+      inputSchema: {
+        projectId: z.number().describe("The ID of the project to search in"),
+        refs: z.string().describe("Comma-separated list of references to search for (e.g., 'TFX-18' or 'TFX-18,TFX-42')"),
+        suiteId: z.number().optional().describe("Optional suite ID to narrow the search"),
+        sectionId: z.number().optional().describe("Optional section ID to narrow the search"),
+      },
+    },
+    async ({ projectId, refs, suiteId, sectionId }) => {
+      try {
+        const testCases = await client.getTestCases(projectId, suiteId, sectionId, { refs_filter: refs });
+        if (testCases.length === 0) {
+          return { content: [{ type: "text", text: `No test cases found for reference(s): ${refs}` }] };
+        }
+        return { content: [{ type: "text", text: `Found ${testCases.length} test case(s) for reference(s) "${refs}":\n${JSON.stringify(testCases, null, 2)}` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error searching test cases by reference: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
     "delete_test_case",
     {
       title: "Delete Test Case",
