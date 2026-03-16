@@ -150,6 +150,36 @@ export function registerRunTools(server: McpServer, client: TestRailsClient): vo
   );
 
   server.registerTool(
+    "find_test_run_by_title",
+    {
+      title: "Find Test Run by Title",
+      description: "Search for test runs whose title contains the given string (case-insensitive)",
+      inputSchema: {
+        projectId: z.number().describe("The ID of the project to search in"),
+        title: z.string().describe("The title (or partial title) to search for"),
+        suiteId: z.number().optional().describe("Optional suite ID to narrow the search"),
+        includeCompleted: z.boolean().optional().describe("Include completed runs in the search (default: false)"),
+      },
+    },
+    async ({ projectId, title, suiteId, includeCompleted }) => {
+      try {
+        const filters = {
+          ...(suiteId && { suite_id: suiteId }),
+          ...(includeCompleted !== true && { is_completed: false }),
+        };
+        const runs = await client.getTestRuns(projectId, filters);
+        const matches = runs.filter(r => r.name.toLowerCase().includes(title.toLowerCase()));
+        if (matches.length === 0) {
+          return { content: [{ type: "text", text: `No test runs found matching title: "${title}"` }] };
+        }
+        return { content: [{ type: "text", text: `Found ${matches.length} test run(s) matching "${title}":\n${JSON.stringify(matches, null, 2)}` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error searching test runs by title: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
     "get_tests",
     {
       title: "Get Tests",
