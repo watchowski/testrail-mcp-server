@@ -69,8 +69,9 @@ export class TestRailsClient {
     if (filters?.created_after) params.created_after = filters.created_after;
     if (filters?.created_before) params.created_before = filters.created_before;
     if (filters?.refs_filter) params.refs_filter = filters.refs_filter;
-    const response = await this.client.get<TestCase[]>(`/get_cases/${projectId}`, { params });
-    return response.data;
+    const response = await this.client.get<{ cases: TestCase[] } | TestCase[]>(`/get_cases/${projectId}`, { params });
+    const data = response.data;
+    return Array.isArray(data) ? data : (data as { cases: TestCase[] }).cases;
   }
 
   async getTestCase(caseId: number): Promise<TestCase> {
@@ -177,8 +178,9 @@ export class TestRailsClient {
     if (filters?.created_before) params.created_before = filters.created_before;
     if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed ? 1 : 0;
     if (filters?.suite_id) params.suite_id = filters.suite_id;
-    const response = await this.client.get<TestRun[]>(`/get_runs/${projectId}`, { params });
-    return response.data;
+    const response = await this.client.get<{ runs: TestRun[] } | TestRun[]>(`/get_runs/${projectId}`, { params });
+    const data = response.data;
+    return Array.isArray(data) ? data : (data as { runs: TestRun[] }).runs;
   }
 
   async getTestRun(runId: number): Promise<TestRun> {
@@ -211,8 +213,9 @@ export class TestRailsClient {
     const params: Record<string, number> = {};
     if (filters?.status_id) params.status_id = filters.status_id;
     if (filters?.assignedto_id) params.assignedto_id = filters.assignedto_id;
-    const response = await this.client.get<Test[]>(`/get_tests/${runId}`, { params });
-    return response.data;
+    const response = await this.client.get<{ tests: Test[] } | Test[]>(`/get_tests/${runId}`, { params });
+    const data = response.data;
+    return Array.isArray(data) ? data : (data as { tests: Test[] }).tests;
   }
 
   async getTest(testId: number): Promise<Test> {
