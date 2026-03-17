@@ -92,6 +92,7 @@ DEBUG=1 npm start
 | Tool | Description |
 |---|---|
 | `get_sections` | List sections (optionally filtered by suite) |
+| `get_section` | Get a specific section by ID (resolves section_id to name) |
 | `create_section` | Create a section, with optional parent for nesting |
 
 ### Test Cases

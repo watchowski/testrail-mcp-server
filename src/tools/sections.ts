@@ -28,6 +28,25 @@ export function registerSectionTools(server: McpServer, client: TestRailsClient)
   );
 
   server.registerTool(
+    "get_section",
+    {
+      title: "Get Section",
+      description: "Get a specific section by ID (useful to resolve a section_id to its name)",
+      inputSchema: {
+        sectionId: z.number().describe("The ID of the section"),
+      },
+    },
+    async ({ sectionId }) => {
+      try {
+        const section = await client.getSection(sectionId);
+        return { content: [{ type: "text", text: JSON.stringify(section, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error fetching section: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
     "create_section",
     {
       title: "Create Section",

@@ -153,8 +153,9 @@ export class TestRailsClient {
   async getSections(projectId: number, suiteId?: number): Promise<Section[]> {
     const params: Record<string, number> = {};
     if (suiteId) params.suite_id = suiteId;
-    const response = await this.client.get<Section[]>(`/get_sections/${projectId}`, { params });
-    return response.data;
+    const response = await this.client.get<{ sections: Section[] } | Section[]>(`/get_sections/${projectId}`, { params });
+    const data = response.data;
+    return Array.isArray(data) ? data : (data as { sections: Section[] }).sections;
   }
 
   async getSection(sectionId: number): Promise<Section> {
