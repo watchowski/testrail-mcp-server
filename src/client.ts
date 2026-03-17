@@ -175,7 +175,7 @@ export class TestRailsClient {
     const params: Record<string, string | number | boolean> = {};
     if (filters?.created_after) params.created_after = filters.created_after;
     if (filters?.created_before) params.created_before = filters.created_before;
-    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed;
+    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed ? 1 : 0;
     if (filters?.suite_id) params.suite_id = filters.suite_id;
     const response = await this.client.get<TestRun[]>(`/get_runs/${projectId}`, { params });
     return response.data;
@@ -257,7 +257,7 @@ export class TestRailsClient {
     const params: Record<string, string | number | boolean> = {};
     if (filters?.created_after) params.created_after = filters.created_after;
     if (filters?.created_before) params.created_before = filters.created_before;
-    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed;
+    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed ? 1 : 0;
     const response = await this.client.get<TestPlan[]>(`/get_plans/${projectId}`, { params });
     return response.data;
   }
@@ -275,9 +275,9 @@ export class TestRailsClient {
   // Milestones
 
   async getMilestones(projectId: number, filters?: MilestoneFilters): Promise<Milestone[]> {
-    const params: Record<string, boolean> = {};
-    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed;
-    if (filters?.is_started !== undefined) params.is_started = filters.is_started;
+    const params: Record<string, number> = {};
+    if (filters?.is_completed !== undefined) params.is_completed = filters.is_completed ? 1 : 0;
+    if (filters?.is_started !== undefined) params.is_started = filters.is_started ? 1 : 0;
     const response = await this.client.get<Milestone[]>(`/get_milestones/${projectId}`, { params });
     return response.data;
   }
