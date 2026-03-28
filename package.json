@@ -1,5 +1,5 @@
 {
-  "name": "testrail-mcp-server",
+  "name": "@watchowski/testrail-mcp-server",
   "version": "1.0.0",
   "description": "A Model Context Protocol server for TestRails integration",
   "main": "build/index.js",
