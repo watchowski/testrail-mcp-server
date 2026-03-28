@@ -7,7 +7,52 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server for Tes
 - Node.js 18+
 - TestRail instance with API access enabled
 
-## Setup
+## Installation
+
+### Via npx (no install required)
+
+```json
+{
+  "mcpServers": {
+    "testrail": {
+      "command": "npx",
+      "args": ["-y", "testrail-mcp-server"],
+      "env": {
+        "TESTRAILS_URL": "https://your-instance.testrail.io",
+        "TESTRAILS_USERNAME": "your-email@company.com",
+        "TESTRAILS_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Via global install
+
+```bash
+npm install -g testrail-mcp-server
+```
+
+Then in your MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "testrail": {
+      "command": "testrail-mcp-server",
+      "env": {
+        "TESTRAILS_URL": "https://your-instance.testrail.io",
+        "TESTRAILS_USERNAME": "your-email@company.com",
+        "TESTRAILS_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+To get your API key: **My Settings → API Keys** in TestRail.
+
+## Local Development Setup
 
 ### 1. Install dependencies
 
@@ -29,15 +74,13 @@ TESTRAILS_USERNAME=your-email@company.com
 TESTRAILS_API_KEY=your-api-key
 ```
 
-To get your API key: **My Settings → API Keys** in TestRail.
-
 ### 3. Build
 
 ```bash
 npm run build
 ```
 
-### 4. Connect to Claude Desktop
+### 4. Connect to Claude Desktop (local build)
 
 Add to your Claude Desktop config (`claude_desktop_config.json`):
 

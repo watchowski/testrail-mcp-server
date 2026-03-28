@@ -1,6 +1,6 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import dotenv from "dotenv";
 import { TestRailsClient } from "./client.js";
 import { registerCaseTools } from "./tools/cases.js";
 import { registerRunTools } from "./tools/runs.js";
@@ -8,8 +8,6 @@ import { registerPlanTools } from "./tools/plans.js";
 import { registerSectionTools } from "./tools/sections.js";
 import { registerSystemTools } from "./tools/system.js";
 import { registerResources } from "./resources.js";
-
-dotenv.config();
 
 const { TESTRAILS_URL, TESTRAILS_API_KEY, TESTRAILS_USERNAME } = process.env;
 
