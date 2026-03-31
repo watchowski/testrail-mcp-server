@@ -166,6 +166,74 @@ export function registerCaseTools(server: McpServer, client: TestRailsClient): v
   );
 
   server.registerTool(
+    "update_multiple_test_cases",
+    {
+      title: "Update Multiple Test Cases",
+      description: "Apply the same field updates to multiple test cases at once",
+      inputSchema: {
+        caseIds: z.array(z.number()).describe("List of test case IDs to update"),
+        title: z.string().optional().describe("New title to set on all cases"),
+        description: z.string().optional().describe("New description/steps to set on all cases"),
+        priorityId: z.number().optional().describe("New priority ID (1=Low, 2=Medium, 3=High, 4=Critical)"),
+        typeId: z.number().optional().describe("New type ID"),
+        refs: z.string().optional().describe("New refs value to set on all cases (replaces existing refs)"),
+        addTag: z.string().optional().describe("Tag to append to each case without removing existing tags (e.g. 'regression', 'smoke')"),
+      },
+    },
+    async ({ caseIds, title, description, priorityId, typeId, refs, addTag }) => {
+      try {
+        const updates = {
+          ...(title && { title }),
+          ...(description && { custom_steps_separated: description }),
+          ...(priorityId && { priority_id: priorityId }),
+          ...(typeId && { type_id: typeId }),
+          ...(refs !== undefined && { refs }),
+        };
+        const bulkUpdates = caseIds.map(caseId => ({ caseId, updates }));
+        const result = await client.updateMultipleTestCases(bulkUpdates, addTag);
+        const summary = {
+          totalAttempted: result.totalAttempted,
+          totalSuccessful: result.totalSuccessful,
+          totalFailed: result.totalFailed,
+          updatedCases: result.results.map(r => ({ id: r.testCase.id, title: r.testCase.title })),
+          failedCases: result.errors.map(e => ({ caseId: e.caseId, error: e.error })),
+        };
+        return { content: [{ type: "text", text: `Bulk test case update completed:\n${JSON.stringify(summary, null, 2)}` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error updating multiple test cases: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
+    "add_tag_to_test_cases",
+    {
+      title: "Add Tag to Test Cases",
+      description: "Add a tag (ref) to one or more test cases without removing existing tags",
+      inputSchema: {
+        caseIds: z.array(z.number()).describe("List of test case IDs to tag"),
+        tag: z.string().describe("The tag to add (e.g., 'regression', 'smoke', 'TFX-42')"),
+      },
+    },
+    async ({ caseIds, tag }) => {
+      try {
+        const result = await client.addTagToTestCases(caseIds, tag);
+        const summary = {
+          tag,
+          totalAttempted: result.totalAttempted,
+          totalSuccessful: result.totalSuccessful,
+          totalFailed: result.totalFailed,
+          taggedCases: result.results.map(r => ({ id: r.testCase.id, title: r.testCase.title, refs: r.testCase.refs })),
+          failedCases: result.errors.map(e => ({ caseId: e.caseId, error: e.error })),
+        };
+        return { content: [{ type: "text", text: `Tag "${tag}" added to test cases:\n${JSON.stringify(summary, null, 2)}` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error adding tag to test cases: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
     "delete_test_case",
     {
       title: "Delete Test Case",

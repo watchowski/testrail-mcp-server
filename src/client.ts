@@ -6,6 +6,7 @@ import type {
   TestPlanPayload, MilestonePayload, TestResultPayload, TestResultsEntry,
   TestCaseFilters, TestRunFilters, TestFilters, TestResultFilters,
   TestPlanFilters, MilestoneFilters, BulkTestCaseInput, BulkCreateResult,
+  BulkEditInput, BulkEditResult,
 } from "./types.js";
 
 const BULK_CREATE_DELAY_MS = 100;
@@ -125,6 +126,78 @@ export class TestRailsClient {
   async updateTestCase(caseId: number, updates: TestCaseUpdates): Promise<TestCase> {
     const response = await this.client.post<TestCase>(`/update_case/${caseId}`, updates);
     return response.data;
+  }
+
+  async updateMultipleTestCases(updates: BulkEditInput[], addTag?: string): Promise<BulkEditResult> {
+    const results: BulkEditResult["results"] = [];
+    const errors: BulkEditResult["errors"] = [];
+
+    for (let i = 0; i < updates.length; i++) {
+      if (i > 0) await delay(BULK_CREATE_DELAY_MS);
+      const { caseId, updates: caseUpdates } = updates[i];
+      try {
+        log(`Updating test case ${i + 1}/${updates.length}: ID ${caseId}`);
+        let finalUpdates = { ...caseUpdates };
+        if (addTag) {
+          const existing = await this.getTestCase(caseId);
+          const tagList = (existing.refs ?? "").split(",").map(t => t.trim()).filter(Boolean);
+          if (!tagList.includes(addTag)) tagList.push(addTag);
+          finalUpdates.refs = tagList.join(", ");
+        }
+        const response = await this.client.post<TestCase>(`/update_case/${caseId}`, finalUpdates);
+        results.push({ success: true, testCase: response.data, caseId, index: i });
+        log(`Updated: ID ${caseId}`);
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: unknown }; message?: string };
+        const errDetail = err.response?.data ?? err.message;
+        log(`Failed to update: ID ${caseId}`, errDetail);
+        errors.push({ success: false, error: errDetail, caseId, index: i });
+      }
+    }
+
+    return {
+      results,
+      errors,
+      totalAttempted: updates.length,
+      totalSuccessful: results.length,
+      totalFailed: errors.length,
+    };
+  }
+
+  async addTagToTestCases(caseIds: number[], tag: string): Promise<BulkEditResult> {
+    const results: BulkEditResult["results"] = [];
+    const errors: BulkEditResult["errors"] = [];
+
+    for (let i = 0; i < caseIds.length; i++) {
+      if (i > 0) await delay(BULK_CREATE_DELAY_MS);
+      const caseId = caseIds[i];
+      try {
+        log(`Adding tag to test case ${i + 1}/${caseIds.length}: ID ${caseId}`);
+        const existing = await this.getTestCase(caseId);
+        const currentRefs = existing.refs ?? "";
+        const tagList = currentRefs.split(",").map(t => t.trim()).filter(Boolean);
+        if (!tagList.includes(tag)) {
+          tagList.push(tag);
+        }
+        const newRefs = tagList.join(", ");
+        const response = await this.client.post<TestCase>(`/update_case/${caseId}`, { refs: newRefs });
+        results.push({ success: true, testCase: response.data, caseId, index: i });
+        log(`Tag added to: ID ${caseId}`);
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: unknown }; message?: string };
+        const errDetail = err.response?.data ?? err.message;
+        log(`Failed to add tag to: ID ${caseId}`, errDetail);
+        errors.push({ success: false, error: errDetail, caseId, index: i });
+      }
+    }
+
+    return {
+      results,
+      errors,
+      totalAttempted: caseIds.length,
+      totalSuccessful: results.length,
+      totalFailed: errors.length,
+    };
   }
 
   async deleteTestCase(caseId: number): Promise<void> {
