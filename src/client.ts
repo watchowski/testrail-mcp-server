@@ -244,6 +244,10 @@ export class TestRailsClient {
     return response.data;
   }
 
+  async deleteSection(sectionId: number): Promise<void> {
+    await this.client.post(`/delete_section/${sectionId}`);
+  }
+
   // Test Runs
 
   async getTestRuns(projectId: number, filters?: TestRunFilters): Promise<TestRun[]> {
