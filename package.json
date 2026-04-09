@@ -20,9 +20,15 @@
     "watch": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs"
   },
-  "keywords": ["mcp", "testrail", "test-management", "model-context-protocol", "qa"],
+  "keywords": [
+    "mcp",
+    "testrail",
+    "test-management",
+    "model-context-protocol",
+    "qa"
+  ],
   "author": "Johannes Leung (https://github.com/watchowski/testrail-mcp-server/)",
   "repository": {
     "type": "git",
@@ -35,8 +41,11 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "^24.3.0",
     "dotenv": "^17.2.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
     "typescript": "^5.9.2"
   }
 }

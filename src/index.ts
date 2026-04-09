@@ -18,14 +18,10 @@ if (!TESTRAILS_URL || !TESTRAILS_API_KEY || !TESTRAILS_USERNAME) {
 
 const client = new TestRailsClient(TESTRAILS_URL, TESTRAILS_API_KEY, TESTRAILS_USERNAME);
 
-const server = new McpServer({
-  name: "testrails-server",
-  version: "1.0.0",
-  capabilities: {
-    tools: {},
-    resources: {},
-  },
-});
+const server = new McpServer(
+  { name: "testrails-server", version: "1.0.0" },
+  { capabilities: { tools: {}, resources: {} } }
+);
 
 registerSystemTools(server, client);
 registerCaseTools(server, client);
