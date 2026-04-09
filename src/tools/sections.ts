@@ -68,4 +68,32 @@ export function registerSectionTools(server: McpServer, client: TestRailsClient)
       }
     }
   );
+
+  server.registerTool(
+    "delete_section_if_empty",
+    {
+      title: "Delete Section If Empty",
+      description: "Delete a section only if it contains no test cases. Returns an error if the section still has tests.",
+      inputSchema: {
+        sectionId: z.number().describe("The ID of the section to delete"),
+        projectId: z.number().describe("The ID of the project (required to check for test cases)"),
+        suiteId: z.number().optional().describe("Suite ID if the project uses suites"),
+      },
+    },
+    async ({ sectionId, projectId, suiteId }) => {
+      try {
+        const cases = await client.getTestCases(projectId, suiteId, sectionId);
+        if (cases.length > 0) {
+          return {
+            content: [{ type: "text", text: `Cannot delete section ${sectionId}: it contains ${cases.length} test case(s). Remove all test cases first.` }],
+            isError: true,
+          };
+        }
+        await client.deleteSection(sectionId);
+        return { content: [{ type: "text", text: `Section ${sectionId} deleted successfully.` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error deleting section: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
 }

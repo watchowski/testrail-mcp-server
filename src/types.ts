@@ -290,3 +290,32 @@ export interface BulkCreateResult {
   totalSuccessful: number;
   totalFailed: number;
 }
+
+// Bulk edit types
+
+export interface BulkEditInput {
+  caseId: number;
+  updates: TestCaseUpdates;
+}
+
+export interface BulkEditSuccess {
+  success: true;
+  testCase: TestCase;
+  caseId: number;
+  index: number;
+}
+
+export interface BulkEditError {
+  success: false;
+  error: unknown;
+  caseId: number;
+  index: number;
+}
+
+export interface BulkEditResult {
+  results: BulkEditSuccess[];
+  errors: BulkEditError[];
+  totalAttempted: number;
+  totalSuccessful: number;
+  totalFailed: number;
+}
