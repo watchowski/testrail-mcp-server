@@ -283,6 +283,71 @@ export function registerRunTools(server: McpServer, client: TestRailsClient): vo
   );
 
   server.registerTool(
+    "get_runs_with_results",
+    {
+      title: "Get Runs with Results",
+      description: "Retrieve all test runs for a project (open, closed, or both) and include the test instances with their current status for each run",
+      inputSchema: {
+        projectId: z.number().describe("The ID of the project"),
+        isCompleted: z.boolean().optional().describe("Filter by completion status. Omit to get both open and closed runs"),
+        suiteId: z.number().optional().describe("Filter by suite ID"),
+      },
+    },
+    async ({ projectId, isCompleted, suiteId }) => {
+      try {
+        const filters = {
+          ...(isCompleted !== undefined && { is_completed: isCompleted }),
+          ...(suiteId && { suite_id: suiteId }),
+        };
+        const runs = await client.getTestRuns(projectId, filters);
+        const runsWithResults = await Promise.all(
+          runs.map(async (run) => {
+            const tests = await client.getTests(run.id);
+            return { ...run, tests };
+          })
+        );
+        return { content: [{ type: "text", text: JSON.stringify(runsWithResults, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error fetching runs with results: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
+    "find_test_run",
+    {
+      title: "Find Test Run by Name or Reference",
+      description: "Search for a test run by matching against its name or description. Searches both open and closed runs by default.",
+      inputSchema: {
+        projectId: z.number().describe("The ID of the project to search in"),
+        query: z.string().describe("The string to search for in the run name or description (case-insensitive)"),
+        suiteId: z.number().optional().describe("Optional suite ID to narrow the search"),
+        isCompleted: z.boolean().optional().describe("Filter by completion status. Omit to search both open and closed runs"),
+      },
+    },
+    async ({ projectId, query, suiteId, isCompleted }) => {
+      try {
+        const filters = {
+          ...(suiteId && { suite_id: suiteId }),
+          ...(isCompleted !== undefined && { is_completed: isCompleted }),
+        };
+        const runs = await client.getTestRuns(projectId, filters);
+        const q = query.toLowerCase();
+        const matches = runs.filter(r =>
+          r.name.toLowerCase().includes(q) ||
+          (r.description ?? "").toLowerCase().includes(q)
+        );
+        if (matches.length === 0) {
+          return { content: [{ type: "text", text: `No test runs found matching: "${query}"` }] };
+        }
+        return { content: [{ type: "text", text: `Found ${matches.length} test run(s) matching "${query}":\n${JSON.stringify(matches, null, 2)}` }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error searching test runs: ${errMsg(error)}` }], isError: true };
+      }
+    }
+  );
+
+  server.registerTool(
     "add_test_result_for_case",
     {
       title: "Add Test Result for Case",
